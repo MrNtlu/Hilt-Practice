@@ -3,9 +3,12 @@ package com.mrntlu.hiltpractice
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.fragment.app.Fragment
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.scopes.ActivityScoped
-import dagger.hilt.android.scopes.FragmentScoped
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,15 +18,11 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var someClass: SomeClass
 
-    @Inject
-    lateinit var someOtherClass: SomeOtherClass
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         println(someClass.testFunc())
-        println(someOtherClass.testFunc())
     }
 }
 
@@ -33,30 +32,62 @@ class TestFragment: Fragment(){
     @Inject
     lateinit var someClass: SomeClass
 
-    @Inject
-    lateinit var someOtherClass: SomeOtherClass
-
-    @Inject
-    lateinit var someAnotherClass: SomeAnotherClass
 }
 
-@Singleton
 class SomeClass
 @Inject
-constructor(){
-    fun testFunc() = "This is a test"
+constructor(
+        private val someInterfaceImpl: SomeInterface
+){
+    fun testFunc() = "This is a test ${someInterfaceImpl.getSomething()}"
 }
 
-@ActivityScoped
-class SomeOtherClass
+class SomeDependency
 @Inject
 constructor(){
-    fun testFunc() = "This is a test for other"
+    fun testFunc() = "for dependency"
 }
 
-@FragmentScoped
-class SomeAnotherClass
+class SomeInterfaceImpl
 @Inject
-constructor(){
-    fun testFunc() = "This is a test for another"
+constructor(
+        private val someDependency: SomeDependency
+): SomeInterface{
+    override fun getSomething() = "You got it ${someDependency.testFunc()}."
+}
+
+interface SomeInterface{
+    fun getSomething(): String
+}
+
+//Provides way
+@InstallIn(SingletonComponent::class)
+@Module
+class TestModuleAlt{
+
+    @Singleton
+    @Provides
+    fun provideSomeDependency(): SomeDependency{
+        return SomeDependency()
+    }
+
+    @Singleton
+    @Provides
+    fun provideSomeInterface(
+            someDependency: SomeDependency
+    ): SomeInterface{
+        return SomeInterfaceImpl(someDependency)
+    }
+}
+
+
+//Binds way
+@InstallIn(SingletonComponent::class)
+@Module
+abstract class TestModule{
+    @Singleton
+    @Binds
+    abstract fun bindSomeDependency(
+            someImpl: SomeInterfaceImpl
+    ): SomeInterface
 }
