@@ -15,11 +15,24 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        println(someClass.testFunc())
+        println(someClass.otherTestFunc())
     }
 }
 
 class SomeClass
 @Inject
-constructor(){
+constructor( //Constructor Injection
+        private val someOtherClass: SomeOtherClass
+){
     fun testFunc() = "This is a test"
+
+    fun otherTestFunc() = someOtherClass.otherTestFunc()
+}
+
+class SomeOtherClass
+@Inject
+constructor(){
+    fun otherTestFunc() = "This is test but the second one."
 }
